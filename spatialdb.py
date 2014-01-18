@@ -1,4 +1,4 @@
-# Spacial location server
+# spatial location server
 # One BST for lat
 # One BST for long
 
@@ -41,7 +41,7 @@ class Node():
 			if self.children[switch] != None:
 				self.children[switch].remove(rest, value)
 
-class SpacialTree():
+class SpatialTree():
 	def __init__(self):
 		self.root = Node()
 	def find(self, x, y):
@@ -64,9 +64,9 @@ class SpacialTree():
 			latnode = latnodes[0]
 			latnode.remove(switchify(y), item)
 
-class SpacialDB():
+class SpatialDB():
 	def __init__(self):
-		self.tree = SpacialTree()
+		self.tree = SpatialTree()
 	def insert(self, lat, lon, ID):
 		self.tree.insert(deg_to_sec(lon), deg_to_sec(lat), ID)
 	def get_at(self, lat, lon):
@@ -87,7 +87,7 @@ class SpacialDB():
 		self.tree.remove(deg_to_sec(lon), deg_to_sec(lat), ID)
 
 if __name__ == '__main__':
-	root = SpacialTree()
+	root = SpatialTree()
 	print(root)
 	print(root.find(100, 0))
 	root.insert(100,0,"hello")
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
 
 
-	db = SpacialDB()
+	db = SpatialDB()
 	db.insert(100.0, 100.0, "test")
 	print(db.get_all(100.0,100.0))
 	db.insert(359.999, 0, "a")

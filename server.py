@@ -2,6 +2,7 @@ import http
 from http import server
 PORT = 8005
 
+import bottledb
 
 class CustomHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
