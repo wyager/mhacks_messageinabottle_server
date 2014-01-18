@@ -90,4 +90,31 @@ class SpacialDB():
 				for bottle in self.tree.find(x, y):
 					bottles.append(bottle)
 		return bottles
+	def remove_at(self, lat, lon, ID):
+		self.tree.remove(deg_to_sec(lon), deg_to_sec(lat), ID)
 
+if __name__ == '__main__':
+	root = SpacialTree()
+	print(root)
+	print(root.find(100, 0))
+	root.insert(100,0,"hello")
+	root.insert(100,0,"hello2")
+	root.insert(200,1,"hello")
+	print(root.find(100, 0))
+	print(root.find(100, 1))
+	print(root.find(101, 0))
+	print(root.find(200, 1))
+	root.remove(100,0,"hello")
+
+
+
+	db = SpacialDB()
+	db.insert(100.0, 100.0, "test")
+	print(db.get_all(100.0,100.0))
+	db.insert(359.999, 0, "a")
+	db.insert(0.001, 0, "b")
+	print(db.get_all(0.0,0))
+	db.remove_at(0.001, 0, "a")
+	print(db.get_all(0.0,0))
+	db.remove_at(359.999, 0, "a")
+	print(db.get_all(0.0,0))
