@@ -6,7 +6,7 @@
 
 # Turn an int into a 16 bit bit array
 switchify = lambda x : [(x >> (15-i)) & 1  for i in range(16)]
-deg_to_sec = lambda x : x/360.0 * 65535
+deg_to_sec = lambda x : round(x/360.0 * 65535)
 
 # Bottle for tree lookups
 class Bottle():
@@ -71,4 +71,23 @@ class SpacialTree():
 			latnode = latnodes[0]
 			latnode.remove(switchify(y), item)
 
+class SpacialDB():
+	def __init__(self):
+		self.tree = SpacialTree()
+	def insert(self, lat, lon, ID):
+		self.tree.insert(deg_to_sec(lon), deg_to_sec(lat), ID)
+	def get_at(self, lat, lon):
+		return self.tree.find(deg_to_sec(lon), deg_to_sec(lat))
+	def get_all(self, lat, lon):
+		"Gets all bottles in the nearest 9 squares"
+		xc = deg_to_sec(lon)
+		yc = deg_to_sec(lat)
+		bottles = []
+		for x in range(xc-1, xc+1):
+			x = x % 65536
+			for y in range(yc-1, yc+1):
+				y = y % 65536
+				for bottle in self.tree.find(x, y):
+					bottles.append(bottle)
+		return bottles
 
