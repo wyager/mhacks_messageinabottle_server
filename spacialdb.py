@@ -6,7 +6,7 @@
 
 # Turn an int into a 16 bit bit array
 switchify = lambda x : [(x >> (15-i)) & 1  for i in range(16)]
-
+deg_to_sec = lambda x : x/360.0 * 65535
 
 # Bottle for tree lookups
 class Bottle():
@@ -40,11 +40,35 @@ class Node():
 				else:
 					self.children = Node(), self.children[1]
 			self.children[switch].insert(rest, item)
+	def remove(self, switches, value):
+		if len(switches) == 0:
+			self.members = [i for i in self.members if i != value]
+		else: # More switches left
+			switch, *rest = switches
+			if self.children[switch] != None:
+				self.children[switch].remove(rest, value)
 
 class SpacialTree():
 	def __init__(self):
 		self.root = Node()
 	def find(self, x, y):
-		return self.root.find(switchify(x))
+		latnodes = self.root.find(switchify(x)) # Note that find() returns a list, even though we only ever expect one item per longnode find()
+		if len(latnodes) == 0:
+			return []
+		else:
+			return latnodes[0].find(switchify(y))
 	def insert(self, x, y, item):
-		self.root.insert(switchify(x), item)
+		latnodes = self.root.find(switchify(x))
+		if len(latnodes) == 0:
+			latnode = Node()
+			self.root.insert(switchify(x), latnode)
+		else:
+			latnode = latnodes[0]
+		latnode.insert(switchify(y), item)
+	def remove(self, x, y, item):
+		latnodes = self.root.find(switchify(x))
+		if len(latnodes) != 0:
+			latnode = latnodes[0]
+			latnode.remove(switchify(y), item)
+
+
