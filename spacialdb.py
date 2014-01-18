@@ -8,13 +8,6 @@
 switchify = lambda x : [(x >> (15-i)) & 1  for i in range(16)]
 deg_to_sec = lambda x : round(x/360.0 * 65535)
 
-# Bottle for tree lookups
-class Bottle():
-	__slots__ = ("x", "y", "ID")
-	def __init__(self, coords, ID):
-		self.x, self.y = coords
-		self.id = ID
-
 
 class Node():
 	def __init__(self):
