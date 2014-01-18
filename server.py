@@ -3,6 +3,22 @@ from http import server
 PORT = 8005
 
 import bottledb
+import coordinates
+
+bdb = bottledb.BottleDB();
+
+with open("log.txt", 'a') as _: # Create the file if it doesn't exist
+    pass
+
+with open("log.txt") as state: # Restore to previous state
+    for line in state:
+        _, ID, lat, lon, data = line.split()
+        ID, data = ID.encode(), data.encode()
+        lat, lon = float(lat), float(lon)
+        bdb.add_bottle(ID, (lat, lon, data))
+
+logfile = open("log.txt",'a')
+
 
 class CustomHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -13,8 +29,35 @@ class CustomHandler(server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type','text/html')
         self.end_headers()
-        if self.path.startswith('/check/'):#=='/move':
-            self.wfile.write(b"{\"exists\": false}")
+        if self.path.startswith('/get/'):#=='/move':
+            ID = self.path[len("/get/"):].encode()
+            if ID in bdb.bottles:
+                bottle = bdb.bottles[ID]
+                lat, lon, data = bottle
+                self.wfile.write("{{\"exists\":true, \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(lat,lon,data.decode()).encode())
+            else:
+                self.wfile.write(b"{\"exists\": false}")
+        elif self.path.startswith('/getat/'):
+            lat, lon, radius, *_ = self.path[len('/getat/'):].split('/')
+            lat, lon, radius = float(lat), float(lon), float(radius)
+            bottles = bdb.spatialdb.get_all(lat, lon)
+            bottles = [(ID, bdb.bottles[ID]) for ID in bottles]
+            bottles = [(ID, blat, blon, bdata) for (ID, (blat, blon, bdata)) in bottles if coordinates.distance((lat, lon), (blat, blon)) < radius]
+            if(len(bottles) > 0):
+                ID, lat, lon, data = bottles[0]
+                self.wfile.write("[{{\"ID\":\"{}\", \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(ID.decode(), lat, lon, data.decode()).encode())
+                for bottle in bottles[1:]:
+                    ID, lat, lon, data = bottle
+                    self.wfile.write(",{{\"ID\":\"{}\", \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(ID.decode(), lat, lon, data.decode()).encode())
+                self.wfile.write(b"]")
+            else:
+                self.wfile.write(b"[]")
+        elif self.path.startswith('/put/'):
+            ID, lat, lon, data, *_ = self.path[len('/put/'):].split('/')
+            ID, data = ID.encode(), data.encode()
+            lat, lon = float(lat), float(lon)
+            bdb.add_bottle(ID, (lat, lon, data))
+            logfile.write("put {} {} {} {}\n".format(ID.decode(), lat, lon, data.decode()))
         else:
             print("invalid url")
             self.wfile.write(b"Invalid URL")
@@ -26,3 +69,4 @@ class CustomHandler(server.BaseHTTPRequestHandler):
 httpd = server.HTTPServer(('', 8005), CustomHandler)
 print("serving at port", PORT)
 httpd.serve_forever()
+logfile.close()
