@@ -45,6 +45,7 @@ class CustomHandler(server.BaseHTTPRequestHandler):
             bottles = [(ID, blat, blon, bdata) for (ID, (blat, blon, bdata)) in bottles if coordinates.distance((lat, lon), (blat, blon)) < radius]
             if(len(bottles) > 0):
                 ID, lat, lon, data = bottles[0]
+                print(bdb.bottles[ID])
                 self.wfile.write("[{{\"ID\":\"{}\", \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(ID.decode(), lat, lon, data.decode()).encode())
                 for bottle in bottles[1:]:
                     ID, lat, lon, data = bottle
@@ -62,6 +63,23 @@ class CustomHandler(server.BaseHTTPRequestHandler):
         else:
             print("invalid url")
             self.wfile.write(b"Invalid URL")
+    def do_POST(self):
+        # print(dir(self.headers))
+        print("Got POST data")
+        length = int(self.headers['Content-Length'])
+        data = self.rfile.read(length)
+        items = data.split(b'&')
+        items = {i.split(b'=')[0]: i.split(b'=')[1] for i in items}
+        ID = items[b'id']
+        lat = float(items[b'lat'])
+        lon = float(items[b'lng'])
+        data = items[b'data']
+        bdb.add_bottle(ID, (lat, lon, data))
+        logfile.write("put {} {} {} {}\n".format(ID.decode(), lat, lon, data.decode()))
+        # length = int(self.headers.getheader('content-length'))
+        # print(length)
+        # data = self.rfile.read(length)
+        # print(data)
 
 
 
