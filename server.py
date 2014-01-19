@@ -58,6 +58,7 @@ class CustomHandler(server.BaseHTTPRequestHandler):
             lat, lon = float(lat), float(lon)
             bdb.add_bottle(ID, (lat, lon, data))
             logfile.write("put {} {} {} {}\n".format(ID.decode(), lat, lon, data.decode()))
+            self.wfile.write(b"OK")
         else:
             print("invalid url")
             self.wfile.write(b"Invalid URL")
