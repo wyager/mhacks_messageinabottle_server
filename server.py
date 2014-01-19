@@ -34,10 +34,12 @@ class CustomHandler(server.BaseHTTPRequestHandler):
             if ID in bdb.bottles:
                 bottle = bdb.bottles[ID]
                 lat, lon, data = bottle
+                print("/get/ bottle with id {}. Result at lat, lon {}, {}".format(ID.decode(), lat, lon))
                 self.wfile.write("{{\"exists\":true, \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(lat,lon,data.decode()).encode())
             else:
                 self.wfile.write(b"{\"exists\": false}")
         elif self.path.startswith('/getat/'):
+            print("got getat request")
             lat, lon, radius, *_ = self.path[len('/getat/'):].split('/')
             lat, lon, radius = float(lat), float(lon), float(radius)
             bottles = bdb.spatialdb.get_all(lat, lon)
@@ -45,11 +47,12 @@ class CustomHandler(server.BaseHTTPRequestHandler):
             bottles = [(ID, blat, blon, bdata) for (ID, (blat, blon, bdata)) in bottles if coordinates.distance((lat, lon), (blat, blon)) < radius]
             if(len(bottles) > 0):
                 ID, lat, lon, data = bottles[0]
-                print(bdb.bottles[ID])
                 self.wfile.write("[{{\"ID\":\"{}\", \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(ID.decode(), lat, lon, data.decode()).encode())
+                print("/getat/ sending bottle with ID {}. lat, lon {}, {}. Data len is {}.".format(ID.decode(), lat, lon, len(data)))
                 for bottle in bottles[1:]:
                     ID, lat, lon, data = bottle
                     self.wfile.write(",{{\"ID\":\"{}\", \"lat\":{}, \"lon\":{}, \"data\":\"{}\"}}".format(ID.decode(), lat, lon, data.decode()).encode())
+                    print("/getat/ sending bottle with ID {}. lat, lon {}, {}. Data len is {}.".format(ID.decode(), lat, lon, len(data)))
                 self.wfile.write(b"]")
             else:
                 self.wfile.write(b"[]")
@@ -57,6 +60,7 @@ class CustomHandler(server.BaseHTTPRequestHandler):
             ID, lat, lon, data, *_ = self.path[len('/put/'):].split('/')
             ID, data = ID.encode(), data.encode()
             lat, lon = float(lat), float(lon)
+            print("put request. ID {}, lat,lon {},{}, data len {}".format(ID.decode(), lat, lon, len(data)))
             bdb.add_bottle(ID, (lat, lon, data))
             logfile.write("put {} {} {} {}\n".format(ID.decode(), lat, lon, data.decode()))
             self.wfile.write(b"OK")
@@ -74,8 +78,10 @@ class CustomHandler(server.BaseHTTPRequestHandler):
         lat = float(items[b'lat'])
         lon = float(items[b'lng'])
         data = items[b'data']
+        print("Got via POST a bottle with ID {}, lat/lon {}, {} and data len {}".format(ID.decode(), lat, lon, len(data)))
         bdb.add_bottle(ID, (lat, lon, data))
         logfile.write("put {} {} {} {}\n".format(ID.decode(), lat, lon, data.decode()))
+        print("POST data finished")
         # length = int(self.headers.getheader('content-length'))
         # print(length)
         # data = self.rfile.read(length)
